@@ -1,5 +1,5 @@
 defmodule ExampleWeb.ErrorJSONTest do
-  use ExampleWeb.ConnCase, async: true
+  use ExampleWeb.ConnCase
 
   test "renders 404" do
     assert ExampleWeb.ErrorJSON.render("404.json", %{}) == %{errors: %{detail: "Not Found"}}

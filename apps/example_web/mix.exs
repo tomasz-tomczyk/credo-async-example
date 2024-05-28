@@ -41,7 +41,8 @@ defmodule ExampleWeb.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:example, in_umbrella: true},
       {:jason, "~> 1.2"},
-      {:bandit, "~> 1.2"}
+      {:bandit, "~> 1.2"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
