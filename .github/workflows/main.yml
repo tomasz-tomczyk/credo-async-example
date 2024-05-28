@@ -1,0 +1,71 @@
+---
+name: Credo Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: main-${{github.ref}}
+  cancel-in-progress: true
+
+env:
+  ELIXIR_VERSION: 1.15.7
+  OTP_VERSION: 26.1.1
+
+jobs:
+  dependencies:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup the container with elixir, erlang and OTP
+        uses: erlef/setup-beam@v1.17.5
+        with:
+          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+      - uses: actions/cache@v4
+        id: mix-cache
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('**/mix.lock') }}-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}
+      - name: Install dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: |
+          mix deps.get
+          MIX_ENV=test mix deps.compile
+      - name: Compile Backend
+        env:
+          MIX_ENV: test
+        run: mix compile
+
+  credo:
+    env:
+      MIX_ENV: test
+    name: Credo
+    needs: dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup the container with elixir, erlang and OTP
+        uses: erlef/setup-beam@v1.17.5
+        with:
+          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+      - uses: actions/cache@v4
+        id: mix-cache
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('**/mix.lock') }}-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}
+      - name: Credo - root
+        run: mix credo
+      - name: Credo - `example_web` directory
+        run: mix credo
+        working-directory: ./apps/example_web
